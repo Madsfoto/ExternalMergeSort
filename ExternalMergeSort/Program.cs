@@ -8,18 +8,26 @@ namespace ExternalMergeSort
 {
   class Program
   {
-    static void Main(string[] args)
+        static long numOfRecords = 0;
+
+        static void Main(string[] args)
     {
-      // This does a external merge sort on a big file
-      // http://en.wikipedia.org/wiki/External_sorting
-      // The idea is to keep the memory usage below 50megs.
+            // This does a external merge sort on a big file
+            // http://en.wikipedia.org/wiki/External_sorting
+            // The idea is to keep the memory usage below 50megs.
+            if (args.Length != 2)
+            {
+                Console.WriteLine("ExternalMergeSort inputfile outputfile");
+                return;
+            }
+            string inputfile = args[0];
+            string outputfile = args[1];
 
 
 
+            Split(inputfile);
 
-      Split("c:\\BigFile.txt");
-
-      MemoryUsage();
+            MemoryUsage();
 
       SortTheChunks();
 
@@ -29,27 +37,35 @@ namespace ExternalMergeSort
 
       MemoryUsage();
     }
+        static void set_Num_Of_Records(long num)
+        {
+            numOfRecords = num;
+        }
+        static long getNumOfrecords()
+        {
+            return numOfRecords;
+        }
 
-    /// <summary>
-    /// Merge all the "sorted00058.dat" chunks together 
-    /// Uses 45MB of ram, for 100 chunks
-    /// Takes 5 minutes, for 100 chunks of 10 megs each ie 1 gig total
-    /// </summary>
-    static void MergeTheChunks()
+
+        /// <summary>
+        /// Merge all the "sorted00058.dat" chunks together 
+        /// Uses 45MB of ram, for 100 chunks
+        /// Takes 5 minutes, for 100 chunks of 10 megs each ie 1 gig total
+        /// </summary>
+        static void MergeTheChunks()
     {
       W("Merging");
 
-      string[] paths = Directory.GetFiles("C:\\", "sorted*.dat");
-      int chunks = paths.Length; // Number of chunks
-      int recordsize = 100; // estimated record size
-      int records = 10000000; // estimated total # records
-      int maxusage = 500000000; // max memory usage
-      int buffersize = maxusage / chunks; // size in bytes of each buffer
-      double recordoverhead = 7.5; // The overhead of using Queue<>
-      int bufferlen = (int)(buffersize / recordsize / recordoverhead); // number of records in each buffer
-
-      // Open the files
-      StreamReader[] readers = new StreamReader[chunks];
+            string[] paths = Directory.GetFiles(Directory.GetCurrentDirectory(), "sorted*.dat");
+            long chunks = paths.Length; // Number of chunks
+            long recordsize = 100; // estimated record size
+            long records = getNumOfrecords(); // estimated total # records
+            long maxusage = 500000000; // max memory usage
+            long buffersize = maxusage / chunks; // size in bytes of each buffer
+            double recordoverhead = 7.5; // The overhead of using Queue<>
+            int bufferlen = (int)(buffersize / recordsize / recordoverhead); // number of records in each buffer
+                                                                             // Open the files
+            StreamReader[] readers = new StreamReader[chunks];
       for (int i = 0; i < chunks; i++)
         readers[i] = new StreamReader(paths[i]);
 
@@ -144,8 +160,8 @@ namespace ExternalMergeSort
     static void SortTheChunks()
     {
       W("Sorting chunks");
-      foreach (string path in Directory.GetFiles("C:\\", "split*.dat"))
-      {
+            foreach (string path in Directory.GetFiles(Directory.GetCurrentDirectory(), "split*.dat"))
+            {
         Console.Write("{0}     \r", path);
 
         // Read all lines into an array
@@ -174,33 +190,37 @@ namespace ExternalMergeSort
     {
       W("Splitting");
       int split_num = 1;
-      StreamWriter sw = new StreamWriter(string.Format("c:\\split{0:d5}.dat", split_num));
-      long read_line = 0;
-      using (StreamReader sr = new StreamReader(file))
-      {
-        while (sr.Peek() >= 0)
-        {
-          // Progress reporting
-          if (++read_line % 5000 == 0)
-            Console.Write("{0:f2}%   \r",
-              100.0 * sr.BaseStream.Position / sr.BaseStream.Length);
+            StreamWriter sw = new StreamWriter(string.Format(Directory.GetCurrentDirectory() + "\\split{0:d5}.dat", split_num));
+            long read_line = 0;
+            int split_length = 100000000;
 
-          // Copy a line
-          sw.WriteLine(sr.ReadLine());
+            using (StreamReader sr = new StreamReader(file))
+            {
+                while (sr.Peek() >= 0)
+                {
+                    // Progress reporting
+                    if (++read_line % 5000 == 0)
+                        Console.Write("{0:f2}%   \r",
+                          100.0 * sr.BaseStream.Position / sr.BaseStream.Length);
 
-          // If the file is big, then make a new split,
-          // however if this was the last line then don't bother
-          if (sw.BaseStream.Length > 100000000 && sr.Peek() >= 0)
-          {
+                    // Copy a line
+                    sw.WriteLine(sr.ReadLine());
+
+                    // If the file is big, then make a new split,
+                    // however if this was the last line then don't bother
+                    if (sw.BaseStream.Length > split_length && sr.Peek() >= 0)
+                    {
+                        sw.Close();
+                        split_num++;
+                        sw = new StreamWriter(string.Format(Directory.GetCurrentDirectory() + "\\split{0:d5}.dat", split_num));
+                    }
+                }
+            }
+            long numOfrec = (long)(split_num * split_length);
+            set_Num_Of_Records(numOfrec);
             sw.Close();
-            split_num++;
-            sw = new StreamWriter(string.Format("c:\\split{0:d5}.dat", split_num));
-          }
+            W("Splitting complete");
         }
-      }
-      sw.Close();
-      W("Splitting complete");
-    }
 
     /// <summary>
     /// Write to console, with the time
