@@ -14,6 +14,9 @@ namespace ExternalMergeSort
       // http://en.wikipedia.org/wiki/External_sorting
       // The idea is to keep the memory usage below 50megs.
 
+
+
+
       Split("c:\\BigFile.txt");
 
       MemoryUsage();
