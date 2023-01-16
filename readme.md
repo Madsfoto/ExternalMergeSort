@@ -1,4 +1,12 @@
+Changes from the original code: (Completed)
+- Upgrade to .net 4.8
+- Adding comandline input and output filename selection
 
+(In progress)
+- Leave only unique (.distinct) lines in the sorted smaller files
+
+
+I have a specific requirement to find the unique lines, hence the third change
 
 Original readme: 
 ----

@@ -15,6 +15,7 @@ namespace ExternalMergeSort
             // This does a external merge sort on a big file
             // http://en.wikipedia.org/wiki/External_sorting
             // The idea is to keep the memory usage below 50megs.
+            
             if (args.Length != 2)
             {
                 Console.WriteLine("ExternalMergeSort inputfile outputfile");
@@ -27,15 +28,15 @@ namespace ExternalMergeSort
 
             Split(inputfile);
 
-            MemoryUsage();
+            
 
       SortTheChunks();
 
-      MemoryUsage();
+            //FindUniqueLines();
 
-      MergeTheChunks();
+      MergeTheChunks(outputfile);
 
-      MemoryUsage();
+      
     }
         static void set_Num_Of_Records(long num)
         {
@@ -46,13 +47,36 @@ namespace ExternalMergeSort
             return numOfRecords;
         }
 
+        /// <summary>
+        /// Find unique/.distinct lines
+        /// Can be omitted if required
+        /// </summary>
+        /// 
+
+        static void FindUniqueLines()
+        {
+            string[] paths = Directory.GetFiles(Directory.GetCurrentDirectory(), "sorted*.dat");
+            int files = paths.Length;
+            foreach (var filename in paths)
+            {
+                using (StreamReader sr = new StreamReader(filename))
+                { // read the file line by line and compare against the cumulative distinct output from that file
+
+
+
+                }
+
+            }
+
+        }
+
 
         /// <summary>
         /// Merge all the "sorted00058.dat" chunks together 
         /// Uses 45MB of ram, for 100 chunks
         /// Takes 5 minutes, for 100 chunks of 10 megs each ie 1 gig total
         /// </summary>
-        static void MergeTheChunks()
+        static void MergeTheChunks(string outputfile)
     {
       W("Merging");
 
@@ -60,7 +84,7 @@ namespace ExternalMergeSort
             long chunks = paths.Length; // Number of chunks
             long recordsize = 100; // estimated record size
             long records = getNumOfrecords(); // estimated total # records
-            long maxusage = 500000000; // max memory usage
+            long maxusage = 50000000; // max memory usage
             long buffersize = maxusage / chunks; // size in bytes of each buffer
             double recordoverhead = 7.5; // The overhead of using Queue<>
             int bufferlen = (int)(buffersize / recordsize / recordoverhead); // number of records in each buffer
@@ -80,9 +104,9 @@ namespace ExternalMergeSort
         LoadQueue(queues[i], readers[i], bufferlen);
       W("Priming the queues complete");
 
-      // Merge!
-      StreamWriter sw = new StreamWriter("C:\\BigFileSorted.txt");
-      bool done = false;
+            // Merge!
+            StreamWriter sw = new StreamWriter(outputfile);
+            bool done = false;
       int lowest_index, j, progress = 0;
       string lowest_value;
       while (!done)
